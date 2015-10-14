@@ -1,0 +1,19 @@
+{
+  "name": "hapi-method-scheduler",
+  "version": "0.0.1",
+  "description": "Hapi plugin to run a server method at a given time",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/firstandthird/hapi-method-scheduler"
+  },
+  "author": "Chris Harris orthagonal1@gmail.com",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/firstandthird/hapi-method-scheduler/issues"
+  },
+  "homepage": "https://github.com/firstandthird/hapi-method-scheduler"
+}
