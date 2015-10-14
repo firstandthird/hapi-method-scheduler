@@ -35,40 +35,44 @@ server.register({
     register : module,
     options : {
       schedule: [
+        // text-style scheduled task
         {
           method : 'math.add',
           time : 'every 4 seconds',
           params : [1,3]
         },
+        // cron-style scheduled task:
         {
           method : 'add',
           cron : "0/5 * * * * *",
           params : [20,20]
         },
+        // uncomment these if you want to test how it handles erroneous submissions:
         // test unparsable time:
-        {
-          method : 'math.add',
-          time : 'asljkdf;124ljk;',
-          params : [21,21]
-        },
-        // test undefined server method:
-        {
-          method : 'asdf.sdfdf',
-          time : 'asljkdf;124ljk;',
-          params : [2,2]
-        },
-        {
-          method : 'add',
-          params : [20,20]
-        },
+        // {
+        //   method : 'math.add',
+        //   time : 'asljkdf;124ljk;',
+        //   params : [21,21]
+        // },
+        // // test undefined server method:
+        // {
+        //   method : 'asdf.sdfdf',
+        //   time : 'every 4 seconds',
+        //   params : [2,2]
+        // },
+        // // test no time specified:
+        // {
+        //   method : 'add',
+        //   params : [20,20]
+        // },
 
       ]
     }
   },
   function(err){
-    server.log(['hapi-method-routes', 'info'], "module registered")
+    server.log(['hapi-method-scheduler', 'info'], "module registered")
     if (err) {
-      server.log(['hapi-method-routes', 'error'], err);
+      server.log(['hapi-method-scheduler', 'error'], err);
     }
     else{
       server.start(function () {
