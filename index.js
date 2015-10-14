@@ -58,7 +58,7 @@ exports.register = function(server, options, next) {
     // push a 'done' callback to the params we pass our server methods:
     params.push(function done(err,result){
       if (err) server.log(['hapi-method-scheduler', 'error'], err);
-      server.log(['hapi-method-scheduler', 'info'], 'Method ' + interval.method + ' called result is ' + result);
+      server.log(['hapi-method-scheduler', 'info'], 'Method ' + scheduleRequest.method + ' called result is ' + result);
     })
   }
   // if all our methods are set up correctly then we can now put them in the queue to run:
