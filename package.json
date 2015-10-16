@@ -15,5 +15,8 @@
   "bugs": {
     "url": "https://github.com/firstandthird/hapi-method-scheduler/issues"
   },
-  "homepage": "https://github.com/firstandthird/hapi-method-scheduler"
+  "homepage": "https://github.com/firstandthird/hapi-method-scheduler",
+  "dependencies": {
+    "later": "^1.2.0"
+  }
 }

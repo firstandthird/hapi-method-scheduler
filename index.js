@@ -29,7 +29,7 @@ exports.register = function(server, options, next) {
     }
     if (method.length-1 != params.length){
       var error = 'Method ' + scheduleRequest.method + 'takes ' + method.length-1 + ' params';
-      server.log(['hapi-method-scheduler', `error`], error);
+      server.log(['hapi-method-scheduler', 'error'], error);
       next(error);
       return;
     }
