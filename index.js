@@ -15,61 +15,73 @@ exports.register = function(server, options, next) {
     var method = _.get(server.methods, scheduleRequest.method, undefined);
     var params = scheduleRequest.params ? scheduleRequest.params : [];
     var scheduleText = scheduleRequest.time ? scheduleRequest.time : scheduleRequest.cron;
+
     if (!method){
-      var error ='Method ' + scheduleRequest.method + ' not defined';
-      server.log(['hapi-method-scheduler', 'error'], error);
-      next(error);
-      return;
+      return next(new Error('Method ' + scheduleRequest.method + ' not defined'));
     }
+
     if (!scheduleText){
-      var error = 'Method ' + scheduleRequest.method + ' requires either a valid "time" or "cron" schedule';
-      server.log(['hapi-method-scheduler', 'error'], error);
-      next(error);
-      return;
+      return next(new Error('Method ' + scheduleRequest.method + ' requires either a valid "time" or "cron" schedule'));
     }
+
     if (method.length-1 != params.length){
-      var error = 'Method ' + scheduleRequest.method + 'takes ' + method.length-1 + ' params';
-      server.log(['hapi-method-scheduler', 'error'], error);
-      next(error);
-      return;
+      return next(new Error('Method ' + scheduleRequest.method + 'takes ' + method.length-1 + ' params'));
     }
+
     // see docs for later.js if confused:
     try{
-        if (scheduleRequest.time){
-          var interval = later.parse.text(scheduleText);
-          methodExecutionData.push({ method: method, interval : interval, params: params});
-        }
-        else {
-          var interval = later.parse.cron(scheduleText, true);
-          methodExecutionData.push({ method: method, interval : interval, params:params});
-        }
+
+      var interval;
+      if (scheduleRequest.time){
+        interval = later.parse.text(scheduleText);
+      } else {
+        interval = later.parse.cron(scheduleText, true);
+      }
+
+      if (interval.error>-1){
+        server.log(['hapi-method-scheduler', 'error'], { message: 'Unable to parse schedule directive', method: scheduleRequest.method });
+        return next(new Error('invalid schedule'));
+      }
+
+      methodExecutionData.push({
+        method: method,
+        interval: interval,
+        params: params,
+        runOnStart: scheduleRequest.runOnStart
+      });
+
     } catch(exc){
-      server.log(['hapi-method-scheduler', 'error'], 'Unable to parse schedule directive for method ' + scheduleRequest.method + ' , error msg is: ' + exc);
+      server.log(['hapi-method-scheduler', 'error'], { message: 'Unable to parse schedule directive', method: scheduleRequest.method, error: exc });
       next(exc);
       return;
     }
     // check for any parse errors that didn't throw an exception:
-    if (interval.error>-1){
-      var error = 'Unable to parse schedule directive for method ' + scheduleRequest.method;
-      server.log(['hapi-method-scheduler', 'error'], error);
-      next(error);
-      return;
-    }
     // push a 'done' callback to the params we pass our server methods:
     params.push(function done(err,result){
-      if (err) server.log(['hapi-method-scheduler', 'error'], err);
-      server.log(['hapi-method-scheduler', 'info'], 'Method ' + scheduleRequest.method + ' called result is ' + result);
-    })
+      if (err) {
+        server.log(['hapi-method-scheduler', 'error'], { method: scheduleRequest.method, error: err });
+      }
+      server.log(['hapi-method-scheduler', 'info'], { method: scheduleRequest.method, result: result });
+    });
   }
+
   // if all our methods are set up correctly then we can now put them in the queue to run:
-  _.each(methodExecutionData, function(i){
-    // finally, set the methodExecutionData for our methods:
-    later.setInterval(function(){
-      i.method.apply(null, i.params);
-    }, i.interval);
+  server.on('start', function() {
+    _.each(methodExecutionData, function(i){
+      // finally, set the methodExecutionData for our methods:
+      later.setInterval(function(){
+        i.method.apply(null, i.params);
+      }, i.interval);
+
+      if (i.runOnStart) {
+        i.method.apply(null, i.params);
+      }
+    });
   });
+
   next();
-}
+};
+
 exports.register.attributes = {
     pkg: require('./package.json')
 };

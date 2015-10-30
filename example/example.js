@@ -47,6 +47,12 @@ server.register({
           cron : "0/5 * * * * *",
           params : [20,20]
         },
+        {
+          method : 'add',
+          cron : "0/20 * * * * *",
+          params : [2,20],
+          runOnStart: true
+        },
         // uncomment these if you want to test how it handles erroneous submissions:
         // test unparsable time:
         // {

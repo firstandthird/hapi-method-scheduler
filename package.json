@@ -18,5 +18,9 @@
   "homepage": "https://github.com/firstandthird/hapi-method-scheduler",
   "dependencies": {
     "later": "^1.2.0"
+  },
+  "devDependencies": {
+    "hapi": "^9.3.1",
+    "lodash": "^3.10.1"
   }
 }
