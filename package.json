@@ -4,7 +4,7 @@
   "description": "Hapi plugin to run a server method at a given time",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "lab --timeout 10000 test"
   },
   "repository": {
     "type": "git",
@@ -20,7 +20,9 @@
     "later": "^1.2.0"
   },
   "devDependencies": {
+    "code": "^2.0.1",
     "hapi": "^9.3.1",
+    "lab": "^7.3.0",
     "lodash": "^3.10.1"
   }
 }
