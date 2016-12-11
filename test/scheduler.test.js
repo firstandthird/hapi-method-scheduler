@@ -104,4 +104,36 @@ lab.experiment('hapi-method-scheduler', function() {
     });
   });
 
+  lab.test(' supports onStart and onFinish hooks ', function(done){
+    let count = 0;
+    server.method('onStart', () => {
+      count++;
+    });
+    server.method('onEnd', (err, params) => {
+      Code.expect(err).to.equal(null);
+      count += params;
+    });
+    server.register({
+      register : module,
+      options : {
+        onStart: 'onStart',
+        onEnd: 'onEnd',
+        schedule: [
+          {
+            method : 'add',
+            time : 'every 1 seconds',
+            params : [1,3]
+          }
+        ]
+      }
+    },
+    function(err){
+      server.start(function(){
+        setTimeout(function checkOutput(){
+          Code.expect(count).to.equal(342);
+          done();
+        }, 7000);
+      });
+    });
+  });
 });

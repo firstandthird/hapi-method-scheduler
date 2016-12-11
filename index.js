@@ -1,20 +1,28 @@
 'use strict';
-var _ = require('lodash');
-var later = require('later');
+const _ = require('lodash');
+const later = require('later');
+const str2fn = require('str2fn');
 
 // see http://bunkat.github.io/later/parsers.html#cron
 // and http://bunkat.github.io/later/parsers.html#text
 // for acceptable formats. this plugin always assumes a seconds field
 // is present for cron.
 exports.register = function(server, options, next) {
+  const onStart = () => {
+    str2fn(server.methods, options.onStart, false)();
+  };
+  const onEnd = (err, params) => {
+    str2fn(server.methods, options.onEnd, false)(err, params);
+  };
+
   // this will hold the method, params and interval for each method we want to run:
-  var methodExecutionData = [];
+  const methodExecutionData = [];
   // populate methodExecutionData, return an error if any are unworkable:
-  for (var i = 0; i < options.schedule.length; i++) {
-    var scheduleRequest = options.schedule[i];
-    var method = _.get(server.methods, scheduleRequest.method, undefined);
-    var params = scheduleRequest.params ? scheduleRequest.params : [];
-    var scheduleText = scheduleRequest.time ? scheduleRequest.time : scheduleRequest.cron;
+  for (let i = 0; i < options.schedule.length; i++) {
+    const scheduleRequest = options.schedule[i];
+    const method = _.get(server.methods, scheduleRequest.method, undefined);
+    const params = scheduleRequest.params ? scheduleRequest.params : [];
+    const scheduleText = scheduleRequest.time ? scheduleRequest.time : scheduleRequest.cron;
 
     if (!method){
       return next(new Error('Method ' + scheduleRequest.method + ' not defined'));
@@ -62,6 +70,7 @@ exports.register = function(server, options, next) {
         server.log(['hapi-method-scheduler', 'error'], { method: scheduleRequest.method, error: err });
       }
       server.log(['hapi-method-scheduler', 'info'], { method: scheduleRequest.method, result: result });
+      onEnd(err, result);
     });
   }
 
@@ -70,10 +79,12 @@ exports.register = function(server, options, next) {
     _.each(methodExecutionData, function(i){
       // finally, set the methodExecutionData for our methods:
       later.setInterval(function(){
+        onStart();
         i.method.apply(null, i.params);
       }, i.interval);
 
       if (i.runOnStart) {
+        onStart();
         i.method.apply(null, i.params);
       }
     });
