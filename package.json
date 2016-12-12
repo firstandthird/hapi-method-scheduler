@@ -17,7 +17,8 @@
   },
   "homepage": "https://github.com/firstandthird/hapi-method-scheduler",
   "dependencies": {
-    "later": "^1.2.0"
+    "later": "^1.2.0",
+    "str2fn": "^1.0.0"
   },
   "devDependencies": {
     "code": "^2.0.1",
