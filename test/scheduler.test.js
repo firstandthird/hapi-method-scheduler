@@ -1,29 +1,27 @@
 // this test takes about 20 seconds to run
 
-var Code = require('code');   // assertion library
-var Lab = require('lab');
-var lab = exports.lab = Lab.script();
-var Hapi = require('hapi');
-var module = require("../index.js");
+const Code = require('code');   // assertion library
+const Lab = require('lab');
+const lab = exports.lab = Lab.script();
+const Hapi = require('hapi');
+const scheduler = require('../index.js');
 
 
-lab.experiment('hapi-method-scheduler', function() {
-  var server;
-  var numberOfTimesCalled = 0;
-  var addResult = 0;
+lab.experiment('hapi-method-scheduler', () => {
+  let server;
+  let numberOfTimesCalled = 0;
+  let addResult = 0;
 
-  var countNumberOfTimesCalled = function (done){
-    console.log("countNumberOfTimesCalled()")
+  const countNumberOfTimesCalled = function (done) {
     numberOfTimesCalled ++;
     done(null, numberOfTimesCalled);
-  }
-  var add = function (a, b, done){
-    console.log(" add called with %s, %s", a, b);
-    addResult += a+b;
+  };
+  const add = function (a, b, done) {
+    addResult += a + b;
     done(null, addResult);
-  }
+  };
 
-  lab.beforeEach(function(done) {
+  lab.beforeEach((done) => {
     server = new Hapi.Server();
     server.method('add', add);
     server.method('countNumberOfTimesCalled', countNumberOfTimesCalled);
@@ -31,25 +29,28 @@ lab.experiment('hapi-method-scheduler', function() {
     done();
   });
 
-  lab.afterEach(function(done){
+  lab.afterEach((done) => {
     server.stop(done);
-  })
-  lab.test(' adds a method and calls it at regular intervals using later.js syntax', function(done){
+  });
+  lab.test(' adds a method and calls it at regular intervals using later.js syntax', (done) => {
     numberOfTimesCalled = 0;
     server.register({
-      register : module,
-      options : {
+      register: scheduler,
+      options: {
         schedule: [
           {
-            method : 'countNumberOfTimesCalled',
-            time : 'every 1 seconds'
+            method: 'countNumberOfTimesCalled',
+            time: 'every 1 seconds'
           }
         ]
       }
     },
-    function(err){
-      server.start(function(){
-        setTimeout(function checkOutput(){
+    (err) => {
+      if (err) {
+        throw err;
+      }
+      server.start(() => {
+        setTimeout(() => {
           Code.expect(numberOfTimesCalled).to.equal(6);
           done();
         }, 7000);
@@ -57,46 +58,50 @@ lab.experiment('hapi-method-scheduler', function() {
     });
   });
 
-  lab.test(' adds a method and calls it at regular intervals using cron syntax', function(done){
+  lab.test(' adds a method and calls it at regular intervals using cron syntax', (done) => {
     numberOfTimesCalled = 0;
     server.register({
-      register : module,
-      options : {
+      register: scheduler,
+      options: {
         schedule: [
           {
-            method : 'countNumberOfTimesCalled',
-            cron : "0/20 * * * * *"
+            method: 'countNumberOfTimesCalled',
+            cron: '0/20 * * * * *'
           }
         ]
       }
     },
-    function(err){
-      server.start(function(){
-        setTimeout(function(){
-          console.log("%s calls", numberOfTimesCalled)
+    (err) => {
+      if (err) {
+        throw err;
+      }
+      server.start(() => {
+        setTimeout(() => {
           Code.expect(numberOfTimesCalled).to.be.above(5).and.to.be.below(8);
           done();
         }, 6000);
       });
     });
   });
-
-  lab.test(' adds a method and calls it with parameters at regular intervals ', function(done){
+  lab.test(' adds a method and calls it with parameters at regular intervals ', (done) => {
     server.register({
-      register : module,
-      options : {
+      register: scheduler,
+      options: {
         schedule: [
           {
-            method : 'add',
-            time : 'every 1 seconds',
-            params : [1,3]
+            method: 'add',
+            time: 'every 1 seconds',
+            params: [1, 3]
           }
         ]
       }
     },
-    function(err){
-      server.start(function(){
-        setTimeout(function checkOutput(){
+    (err) => {
+      if (err) {
+        throw err;
+      }
+      server.start(() => {
+        setTimeout(() => {
           Code.expect(addResult).to.equal(24);
           done();
         }, 7000);
@@ -104,4 +109,41 @@ lab.experiment('hapi-method-scheduler', function() {
     });
   });
 
+  lab.test(' supports onStart and onFinish hooks ', (done) => {
+    let count = 0;
+    server.method('onStart', (methodName) => {
+      Code.expect(methodName).to.equal('add');
+      count++;
+    });
+    server.method('onEnd', (err, methodName, params) => {
+      Code.expect(err).to.equal(null);
+      Code.expect(methodName).to.equal('add');
+      count += params;
+    });
+    server.register({
+      register: scheduler,
+      options: {
+        onStart: 'onStart',
+        onEnd: 'onEnd',
+        schedule: [
+          {
+            method: 'add',
+            time: 'every 1 seconds',
+            params: [1, 3]
+          }
+        ]
+      }
+    },
+    (err) => {
+      if (err) {
+        throw err;
+      }
+      server.start(() => {
+        setTimeout(() => {
+          Code.expect(count).to.equal(342);
+          done();
+        }, 7000);
+      });
+    });
+  });
 });
