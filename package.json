@@ -4,7 +4,7 @@
   "description": "Hapi plugin to run a server method at a given time",
   "main": "index.js",
   "scripts": {
-    "test": "lab --timeout 10000 test"
+    "test": "lab --timeout 10000 test --leaks"
   },
   "repository": {
     "type": "git",
