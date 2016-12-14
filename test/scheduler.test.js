@@ -1,3 +1,4 @@
+'use strict';
 // this test takes about 20 seconds to run
 
 const Code = require('code');   // assertion library
