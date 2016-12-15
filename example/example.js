@@ -1,4 +1,4 @@
-"use strict"
+"use strict";
 var _ = require("lodash");
 var Hapi = require("hapi");
 var module = require("../index.js");
