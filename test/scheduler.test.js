@@ -52,9 +52,9 @@ lab.experiment('hapi-method-scheduler', () => {
       }
       server.start(() => {
         setTimeout(() => {
-          Code.expect(numberOfTimesCalled).to.equal(6);
+          Code.expect(numberOfTimesCalled).to.equal(2);
           done();
-        }, 7000);
+        }, 2500);
       });
     });
   });
@@ -78,9 +78,9 @@ lab.experiment('hapi-method-scheduler', () => {
       }
       server.start(() => {
         setTimeout(() => {
-          Code.expect(numberOfTimesCalled).to.be.above(0).and.to.be.below(8);
+          Code.expect(numberOfTimesCalled).to.equal(3);
           done();
-        }, 6000);
+        }, 2500);
       });
     });
   });
@@ -103,9 +103,9 @@ lab.experiment('hapi-method-scheduler', () => {
       }
       server.start(() => {
         setTimeout(() => {
-          Code.expect(addResult).to.equal(24);
+          Code.expect(addResult).to.be.above(4);
           done();
-        }, 7000);
+        }, 2200);
       });
     });
   });
@@ -141,9 +141,9 @@ lab.experiment('hapi-method-scheduler', () => {
       }
       server.start(() => {
         setTimeout(() => {
-          Code.expect(count).to.be.above(300);
+          Code.expect(count).to.equal(42);
           done();
-        }, 7000);
+        }, 2500);
       });
     });
   });
