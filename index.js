@@ -3,11 +3,54 @@ const _ = require('lodash');
 const later = require('later');
 const str2fn = require('str2fn');
 
+const moment = require('moment-timezone');
 // see http://bunkat.github.io/later/parsers.html#cron
 // and http://bunkat.github.io/later/parsers.html#text
 // for acceptable formats. this plugin always assumes a seconds field
 // is present for cron.
 exports.register = function(server, options, next) {
+  // in order to use options.timezone you must override later.setTimeout:
+  if (options.timezone) {
+    later.setTimeout = (fn, sched) => {
+      const s = later.schedule(sched);
+      let t;
+      const scheduleTimeout = () => {
+        // get the normal 'now' time:
+        const now = new Date();
+        // get a timezone-adjusted 'now':
+        const zone = moment.tz.zone(options.timezone);
+        const offset = zone.offset(now);
+        const adjustedNow = new Date(now.getTime() - (60000 * offset));
+        // use the timezone-adjusted 'now' to generate the list of nextTimes
+        // that laterjs will schedule. then un-adjust each of those next times
+        // back to their UTC equivalent:
+        const nextTime = s.next(2, adjustedNow).map((time) => {
+          const t2 = moment(time);
+          t2.add(offset, 'minutes');
+          return t2.toDate();
+        });
+        // the rest of this is identical to laterjs's setTimeout
+        let diff = nextTime[0].getTime() - now;
+        // minimum time to fire is one second, use nextTime occurrence instead
+        if (diff < 1000) {
+          diff = nextTime[1] ? nextTime[1].getTime() - now : 1000;
+        }
+        if (diff < 2147483647) {
+          t = setTimeout(fn, diff);
+        } else {
+          t = setTimeout(scheduleTimeout, 2147483647);
+        }
+      };
+      if (fn) {
+        scheduleTimeout();
+      }
+      return {
+        isDone: () => !t,
+        clear: () => clearTimeout(t)
+      };
+    };
+  }
+
   const onStart = (methodName) => {
     if (options.onStart) {
       str2fn(server.methods, options.onStart, false)(methodName);
@@ -53,7 +96,6 @@ exports.register = function(server, options, next) {
         server.log(['hapi-method-scheduler', 'error'], { message: 'Unable to parse schedule directive', method: scheduleRequest.method });
         return next(new Error('invalid schedule'));
       }
-
       methodExecutionData.push({
         method,
         methodName: scheduleRequest.method,
@@ -92,7 +134,6 @@ exports.register = function(server, options, next) {
       }
     });
   });
-
   next();
 };
 

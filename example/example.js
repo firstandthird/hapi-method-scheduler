@@ -13,6 +13,7 @@ function add(a, b, done){
 // another example, this one will be added to server.method.math
 // to demonstrate how methods can be namespaced:
 function mathAdd(a,b,done){
+  console.log('MATHADD')
   try{
     var floatA = parseFloat(a);
     var floatB = parseFloat(b);
@@ -34,11 +35,12 @@ server.connection({ port: 3000 });
 server.register({
     register : module,
     options : {
+      timezone: 'America/Los_Angeles',
       schedule: [
         // text-style scheduled task
         {
           method : 'math.add',
-          time : 'every 4 seconds',
+          time : 'every 1 second after 13:04 on Wednesday',
           params : [1,3]
         },
         // cron-style scheduled task:
