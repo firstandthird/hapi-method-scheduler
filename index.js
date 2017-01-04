@@ -1,6 +1,7 @@
 'use strict';
 const _ = require('lodash');
 const str2fn = require('str2fn');
+const later = require('later');
 
 // see http://bunkat.github.io/later/parsers.html#cron
 // and http://bunkat.github.io/later/parsers.html#text
@@ -8,7 +9,7 @@ const str2fn = require('str2fn');
 // is present for cron.
 exports.register = function(server, options, next) {
   // in order to use options.timezone you must override later.setTimeout:
-  const later = require('later-timezone').timezone(options.timezone);
+  require('later-timezone').timezone(later, options.timezone);
 
   const onStart = (methodName) => {
     if (options.onStart) {

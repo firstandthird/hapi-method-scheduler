@@ -40,7 +40,7 @@ server.register({
         // text-style scheduled task
         {
           method : 'math.add',
-          time : 'every 1 second after 17:03 on Tuesday',
+          time : 'every 1 second after 17:25 on Tuesday',
           params : [1,3]
         },
         // cron-style scheduled task:
