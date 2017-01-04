@@ -40,21 +40,21 @@ server.register({
         // text-style scheduled task
         {
           method : 'math.add',
-          time : 'every 1 second after 13:04 on Wednesday',
+          time : 'every 1 second after 17:03 on Tuesday',
           params : [1,3]
         },
         // cron-style scheduled task:
-        {
-          method : 'add',
-          cron : "0/5 * * * * *",
-          params : [20,20]
-        },
-        {
-          method : 'add',
-          cron : "0/20 * * * * *",
-          params : [2,20],
-          runOnStart: true
-        },
+        // {
+        //   method : 'add',
+        //   cron : "0/5 * * * * *",
+        //   params : [20,20]
+        // },
+        // {
+        //   method : 'add',
+        //   cron : "0/20 * * * * *",
+        //   params : [2,20],
+        //   runOnStart: true
+        // },
         // uncomment these if you want to test how it handles erroneous submissions:
         // test unparsable time:
         // {
