@@ -178,11 +178,11 @@ lab.experiment('hapi-method-scheduler', () => {
         break;
       }
     }
-    const string = `after ${new Date().getHours()}:${getMinutes(-1)}`;
+    const string = `after ${new Date().getHours()}:${getMinutes(1)}`;
     server.register({
       register: scheduler,
       options: {
-        timezone: moment.tz.guess(),
+        timezone: futureZone,
         schedule: [
           {
             method: 'add',
