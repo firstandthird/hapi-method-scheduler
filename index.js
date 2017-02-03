@@ -1,13 +1,18 @@
 'use strict';
 const _ = require('lodash');
-const later = require('later');
 const str2fn = require('str2fn');
+const later = require('later');
 
 // see http://bunkat.github.io/later/parsers.html#cron
 // and http://bunkat.github.io/later/parsers.html#text
 // for acceptable formats. this plugin always assumes a seconds field
 // is present for cron.
 exports.register = function(server, options, next) {
+  // in order to use options.timezone you must override later.setTimeout:
+  if (options.timezone) {
+    require('later-timezone').timezone(later, options.timezone);
+  }
+
   const onStart = (methodName) => {
     if (options.onStart) {
       str2fn(server.methods, options.onStart, false)(methodName);
@@ -48,12 +53,10 @@ exports.register = function(server, options, next) {
       } else {
         interval = later.parse.cron(scheduleText, true);
       }
-
       if (interval.error > -1) {
         server.log(['hapi-method-scheduler', 'error'], { message: 'Unable to parse schedule directive', method: scheduleRequest.method });
         return next(new Error('invalid schedule'));
       }
-
       methodExecutionData.push({
         method,
         methodName: scheduleRequest.method,
@@ -92,7 +95,6 @@ exports.register = function(server, options, next) {
       }
     });
   });
-
   next();
 };
 
