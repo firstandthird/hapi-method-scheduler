@@ -9,7 +9,9 @@ const later = require('later');
 // is present for cron.
 exports.register = function(server, options, next) {
   // in order to use options.timezone you must override later.setTimeout:
-  require('later-timezone').timezone(later, options.timezone);
+  if (options.timezone) {
+    require('later-timezone').timezone(later, options.timezone);
+  }
 
   const onStart = (methodName) => {
     if (options.onStart) {
@@ -51,7 +53,6 @@ exports.register = function(server, options, next) {
       } else {
         interval = later.parse.cron(scheduleText, true);
       }
-
       if (interval.error > -1) {
         server.log(['hapi-method-scheduler', 'error'], { message: 'Unable to parse schedule directive', method: scheduleRequest.method });
         return next(new Error('invalid schedule'));
