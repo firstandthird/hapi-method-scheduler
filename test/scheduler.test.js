@@ -151,7 +151,7 @@ lab.experiment('hapi-method-scheduler', () => {
     });
   });
 
-  lab.test(' supports timezone', { timeout: 5000 },  (done) => {
+  lab.test(' supports timezone', { timeout: 5000 }, (done) => {
     const getOffset = (zoneName) => {
       const now = new Date();
       const zone = moment.tz.zone(zoneName);
