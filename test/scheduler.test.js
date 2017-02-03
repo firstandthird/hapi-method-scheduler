@@ -78,7 +78,7 @@ lab.experiment('hapi-method-scheduler', () => {
       }
       server.start(() => {
         setTimeout(() => {
-          Code.expect(numberOfTimesCalled).to.equal(3);
+          Code.expect(numberOfTimesCalled).to.be.above(2);
           done();
         }, 2500);
       });
