@@ -1,6 +1,4 @@
 'use strict';
-// this test takes about 20 seconds to run
-
 const Code = require('code');   // assertion library
 const Lab = require('lab');
 const lab = exports.lab = Lab.script();
@@ -80,7 +78,7 @@ lab.experiment('hapi-method-scheduler', () => {
       }
       server.start(() => {
         setTimeout(() => {
-          Code.expect(numberOfTimesCalled).to.equal(3);
+          Code.expect(numberOfTimesCalled).to.be.above(2);
           done();
         }, 2500);
       });
@@ -178,11 +176,11 @@ lab.experiment('hapi-method-scheduler', () => {
         break;
       }
     }
-    const string = `after ${new Date().getHours()}:${getMinutes(-1)}`;
+    const string = `after ${new Date().getHours()}:${getMinutes(1)}`;
     server.register({
       register: scheduler,
       options: {
-        timezone: moment.tz.guess(),
+        timezone: futureZone,
         schedule: [
           {
             method: 'add',
