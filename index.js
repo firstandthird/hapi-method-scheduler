@@ -41,9 +41,10 @@ exports.register = function(server, options, next) {
       return next(new Error(`Method ${scheduleRequest.method} requires either a valid "time" or "cron" schedule`));
     }
 
-    if (method.length - 1 !== params.length) {
-      return next(new Error(`Method ${scheduleRequest.method} takes ${method.length - 1} params`));
-    }
+    // This doesn't seem to work with hapi-method-loader (Always comes back as -1 params which is impossible...)
+    // if (method.length - 1 !== params.length) {
+    //   return next(new Error(`Method ${scheduleRequest.method} takes ${method.length - 1} params`));
+    // }
 
     // see docs for later.js if confused:
     try {
