@@ -78,7 +78,6 @@ exports.register = function(server, options, next) {
     });
   };
 
-  // if all our methods are set up correctly then we can now put them in the queue to run:
   server.on('start', () => {
     server.method('methodScheduler.getSchedule', (methodName) => {
       for (let i = 0; i < methodExecutionData.length; i++) {
@@ -87,11 +86,13 @@ exports.register = function(server, options, next) {
         }
       }
     });
+
     server.method('methodScheduler.stopSchedule', (methodName) => {
       const method = server.methods.methodScheduler.getSchedule(methodName);
       method.executingSchedule.clear();
       methodExecutionData = methodExecutionData.filter((el) => el !== method);
     });
+
     server.method('methodScheduler.startSchedule', (methodSpec) => {
       createScheduleFromRequest(methodSpec);
       const method = server.methods.methodScheduler.getSchedule(methodSpec.method);
@@ -104,6 +105,8 @@ exports.register = function(server, options, next) {
         method.method.apply(null, method.params);
       }
     });
+
+    // register any methods that were passed in params:
     if (Array.isArray(options.schedule)) {
       options.schedule.forEach((i) => {
         server.methods.methodScheduler.startSchedule(i);
