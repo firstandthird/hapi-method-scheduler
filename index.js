@@ -25,14 +25,11 @@ exports.register = function(server, options, next) {
   };
 
   // this will hold the method, params and interval for each method we want to run:
-  const methodExecutionData = [];
-  // populate methodExecutionData, return an error if any are unworkable:
-  for (let i = 0; i < options.schedule.length; i++) {
-    const scheduleRequest = options.schedule[i];
+  let methodExecutionData = [];
+  const createScheduleFromRequest = (scheduleRequest) => {
     const method = _.get(server.methods, scheduleRequest.method, undefined);
     const params = scheduleRequest.params ? scheduleRequest.params : [];
     const scheduleText = scheduleRequest.time ? scheduleRequest.time : scheduleRequest.cron;
-
     if (!method) {
       return next(new Error(`Method ${scheduleRequest.method} not defined`));
     }
@@ -44,7 +41,6 @@ exports.register = function(server, options, next) {
     if (method.length - 1 !== params.length) {
       return next(new Error(`Method ${scheduleRequest.method} takes ${method.length - 1} params`));
     }
-
     // see docs for later.js if confused:
     try {
       let interval;
@@ -78,7 +74,8 @@ exports.register = function(server, options, next) {
       server.log(['hapi-method-scheduler', 'info'], { method: scheduleRequest.method, result });
       onEnd(err, scheduleRequest.method, result);
     });
-  }
+  };
+
   // if all our methods are set up correctly then we can now put them in the queue to run:
   server.on('start', () => {
     server.method('methodScheduler.getSchedule', (methodName) => {
@@ -89,10 +86,13 @@ exports.register = function(server, options, next) {
       }
     });
     server.method('methodScheduler.stopSchedule', (methodName) => {
-      server.methods.methodScheduler.getSchedule(methodName).executingSchedule.clear();
-    });
-    server.method('methodScheduler.startSchedule', (methodName) => {
       const method = server.methods.methodScheduler.getSchedule(methodName);
+      method.executingSchedule.clear();
+      methodExecutionData = methodExecutionData.filter((el) => el !== method);
+    });
+    server.method('methodScheduler.startSchedule', (methodSpec) => {
+      createScheduleFromRequest(methodSpec);
+      const method = server.methods.methodScheduler.getSchedule(methodSpec.method);
       method.executingSchedule = later.setInterval(() => {
         onStart(method.methodName);
         method.method.apply(null, method.params);
@@ -102,9 +102,11 @@ exports.register = function(server, options, next) {
         method.method.apply(null, method.params);
       }
     });
-    _.each(methodExecutionData, (i) => {
-      server.methods.methodScheduler.startSchedule(i.methodName);
-    });
+    if (Array.isArray(options.schedule)) {
+      options.schedule.forEach((i) => {
+        server.methods.methodScheduler.startSchedule(i);
+      });
+    }
   });
   next();
 };
