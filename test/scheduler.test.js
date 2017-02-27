@@ -22,6 +22,7 @@ lab.experiment('hapi-method-scheduler', () => {
   };
 
   lab.beforeEach((done) => {
+    numberOfTimesCalled = 0;
     server = new Hapi.Server();
     server.method('add', add);
     server.method('countNumberOfTimesCalled', countNumberOfTimesCalled);
@@ -33,7 +34,7 @@ lab.experiment('hapi-method-scheduler', () => {
     server.stop(done);
   });
 
-  lab.test(' adds a method and calls it at regular intervals using later.js syntax', (done) => {
+  lab.test('can register a method to be called at regular intervals using later.js syntax', (done) => {
     numberOfTimesCalled = 0;
     server.register({
       register: scheduler,
@@ -80,7 +81,7 @@ lab.experiment('hapi-method-scheduler', () => {
         setTimeout(() => {
           Code.expect(numberOfTimesCalled).to.be.above(2);
           done();
-        }, 2500);
+        }, 3000);
       });
     });
   });
