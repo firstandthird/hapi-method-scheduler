@@ -26,6 +26,8 @@ exports.register = function(server, options, next) {
 
   // this will hold the method, params and interval for each method we want to run:
   let methodExecutionData = [];
+
+  // create a laterjs interval schedule from an input:
   const createScheduleFromRequest = (scheduleRequest) => {
     const method = _.get(server.methods, scheduleRequest.method, undefined);
     const params = scheduleRequest.params ? scheduleRequest.params : [];
