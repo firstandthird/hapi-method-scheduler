@@ -59,6 +59,35 @@ lab.experiment('hapi-method-scheduler', () => {
     });
   });
 
+  lab.test(' can stop an added method', (done) => {
+    numberOfTimesCalled = 0;
+    server.register({
+      register: scheduler,
+      options: {
+        schedule: [
+          {
+            method: 'countNumberOfTimesCalled',
+            time: 'every 1 seconds'
+          }
+        ]
+      }
+    },
+    (err) => {
+      if (err) {
+        throw err;
+      }
+      server.start(() => {
+        setTimeout(() => {
+          server.methods.methodScheduler.stopSchedule('countNumberOfTimesCalled');
+          setTimeout(() => {
+            Code.expect(numberOfTimesCalled).to.equal(3);
+            done();
+          }, 2500);
+        }, 100);
+      });
+    });
+  });
+
   lab.test(' adds a method and calls it at regular intervals using cron syntax', (done) => {
     numberOfTimesCalled = 0;
     server.register({

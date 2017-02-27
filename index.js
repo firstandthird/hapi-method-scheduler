@@ -79,20 +79,31 @@ exports.register = function(server, options, next) {
       onEnd(err, scheduleRequest.method, result);
     });
   }
-
   // if all our methods are set up correctly then we can now put them in the queue to run:
   server.on('start', () => {
-    _.each(methodExecutionData, (i) => {
-      // finally, set the methodExecutionData for our methods:
-      later.setInterval(() => {
-        onStart(i.methodName);
-        i.method.apply(null, i.params);
-      }, i.interval);
-
-      if (i.runOnStart) {
-        onStart(i.methodName);
-        i.method.apply(null, i.params);
+    server.method('methodScheduler.getSchedule', (methodName) => {
+      for (let i = 0; i < methodExecutionData.length; i++) {
+        if (methodExecutionData[i].methodName === methodName) {
+          return methodExecutionData[i];
+        }
       }
+    });
+    server.method('methodScheduler.stopSchedule', (methodName) => {
+      server.methods.methodScheduler.getSchedule(methodName).executingSchedule.clear();
+    });
+    server.method('methodScheduler.startSchedule', (methodName) => {
+      const method = server.methods.methodScheduler.getSchedule(methodName);
+      method.executingSchedule = later.setInterval(() => {
+        onStart(method.methodName);
+        method.method.apply(null, method.params);
+      }, method.interval);
+      if (method.runOnStart) {
+        onStart(method.methodName);
+        method.method.apply(null, method.params);
+      }
+    });
+    _.each(methodExecutionData, (i) => {
+      server.methods.methodScheduler.startSchedule(i.methodName);
     });
   });
   next();
