@@ -109,7 +109,7 @@ lab.experiment('hapi-method-scheduler', () => {
         setTimeout(() => {
           Code.expect(numberOfTimesCalled).to.be.above(2);
           done();
-        }, 2500);
+        }, 3000);
       });
     });
   });
