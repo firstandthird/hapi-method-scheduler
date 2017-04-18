@@ -112,16 +112,46 @@ lab.experiment('hapi-method-scheduler', () => {
     });
   });
 
+  lab.test(' adds a method as a complete call of the form "foo(param1, param2)" and calls it at regular intervals ', (done) => {
+    server.register({
+      register: scheduler,
+      options: {
+        schedule: [
+          {
+            method: 'add(1, 3)',
+            time: 'every 1 seconds'
+          }
+        ]
+      }
+    },
+    (err) => {
+      if (err) {
+        throw err;
+      }
+      server.start(() => {
+        setTimeout(() => {
+          Code.expect(addResult).to.be.above(4);
+          addResult = 0;
+          done();
+        }, 2200);
+      });
+    });
+  });
+
   lab.test(' supports onStart and onFinish hooks ', (done) => {
-    let count = 0;
+    const eventCalls = {
+      start: 0,
+      end: 0
+    };
     server.method('onStart', (methodName) => {
       Code.expect(methodName).to.equal('add');
-      count++;
+      eventCalls.start++;
     });
     server.method('onEnd', (err, methodName, params) => {
       Code.expect(err).to.equal(null);
       Code.expect(methodName).to.equal('add');
-      count += params;
+      eventCalls.end ++;
+      eventCalls.endParams = params;
     });
     server.register({
       register: scheduler,
@@ -143,13 +173,14 @@ lab.experiment('hapi-method-scheduler', () => {
       }
       server.start(() => {
         setTimeout(() => {
-          Code.expect(count).to.equal(42);
+          Code.expect(eventCalls.start).to.be.above(1);
+          Code.expect(eventCalls.end).to.be.above(1);
+          Code.expect(eventCalls.endParams).to.be.above(4);
           done();
         }, 2500);
       });
     });
   });
-
   lab.test(' supports timezone', { timeout: 5000 }, (done) => {
     const getOffset = (zoneName) => {
       const now = new Date();
