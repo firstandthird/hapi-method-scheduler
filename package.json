@@ -20,7 +20,7 @@
     "async": "^2.3.0",
     "later": "^1.2.0",
     "later-timezone": "^1.0.0",
-    "str2fn": "^1.0.0"
+    "str2fn": "^2.0.0"
   },
   "devDependencies": {
     "code": "^2.0.1",

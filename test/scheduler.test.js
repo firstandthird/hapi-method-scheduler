@@ -112,6 +112,32 @@ lab.experiment('hapi-method-scheduler', () => {
     });
   });
 
+  lab.test(' adds a method as a complete call of the form "foo(param1, param2)" and calls it at regular intervals ', (done) => {
+    server.register({
+      register: scheduler,
+      options: {
+        schedule: [
+          {
+            method: 'add(1, 3)',
+            time: 'every 1 seconds'
+          }
+        ]
+      }
+    },
+    (err) => {
+      if (err) {
+        throw err;
+      }
+      server.start(() => {
+        setTimeout(() => {
+          Code.expect(addResult).to.be.above(4);
+          addResult = 0;
+          done();
+        }, 2200);
+      });
+    });
+  });
+
   lab.test(' supports onStart and onFinish hooks ', (done) => {
     let count = 0;
     server.method('onStart', (methodName) => {
