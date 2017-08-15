@@ -234,4 +234,35 @@ lab.experiment('hapi-method-scheduler', () => {
       });
     });
   });
+
+  lab.test('runOnStart will execute the method when it is registered', { timeout: 3000 }, (done) => {
+    let calledOnStart = 0;
+    server.method('callOnStart', (callDone) => {
+      calledOnStart++;
+      callDone();
+    });
+    server.register({
+      register: scheduler,
+      options: {
+        schedule: [
+          {
+            method: 'callOnStart',
+            time: 'every 10 days',
+            runOnStart: true
+          }
+        ]
+      }
+    },
+    (err) => {
+      if (err) {
+        throw err;
+      }
+      server.start(() => {
+        setTimeout(() => {
+          Code.expect(calledOnStart).to.equal(1);
+          done();
+        }, 2500);
+      });
+    });
+  });
 });
