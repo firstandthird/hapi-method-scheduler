@@ -25,9 +25,6 @@ const register = async function(server, options) {
       });
     }
   });
-  // server.events.on('end', () => {
-  //   // need to close all schedules on shutdown
-  // });
 };
 
 exports.plugin = {
