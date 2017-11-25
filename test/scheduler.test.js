@@ -21,23 +21,21 @@ lab.experiment('hapi-method-scheduler', () => {
     done(null, addResult);
   };
 
-  lab.beforeEach((done) => {
+  lab.beforeEach(async() => {
     numberOfTimesCalled = 0;
-    server = new Hapi.Server();
+    server = new Hapi.Server({ port: 3000 });
     server.method('add', add);
     server.method('countNumberOfTimesCalled', countNumberOfTimesCalled);
-    server.connection({ port: 3000 });
-    done();
   });
 
-  lab.afterEach((done) => {
-    server.stop(done);
+  lab.afterEach(async() => {
+    await server.stop();
   });
 
-  lab.test('can register a method to be called at regular intervals using later.js syntax', (done) => {
+  lab.test('can register a method to be called at regular intervals using later.js syntax', async() => {
     numberOfTimesCalled = 0;
-    server.register({
-      register: scheduler,
+    await server.register({
+      plugin: scheduler,
       options: {
         schedule: [
           {
@@ -46,24 +44,16 @@ lab.experiment('hapi-method-scheduler', () => {
           }
         ]
       }
-    },
-    (err) => {
-      if (err) {
-        throw err;
-      }
-      server.start(() => {
-        setTimeout(() => {
-          Code.expect(numberOfTimesCalled).to.equal(2);
-          done();
-        }, 2500);
-      });
     });
+    await server.start();
+    const wait = ms => new Promise(resolve => setTimeout(resolve, ms)); await wait(2500);
+    Code.expect(numberOfTimesCalled).to.equal(2);
   });
 
-  lab.test(' adds a method and calls it at regular intervals using cron syntax', (done) => {
+  lab.test(' adds a method and calls it at regular intervals using cron syntax', async() => {
     numberOfTimesCalled = 0;
-    server.register({
-      register: scheduler,
+    await server.register({
+      plugin: scheduler,
       options: {
         schedule: [
           {
@@ -72,23 +62,15 @@ lab.experiment('hapi-method-scheduler', () => {
           }
         ]
       }
-    },
-    (err) => {
-      if (err) {
-        throw err;
-      }
-      server.start(() => {
-        setTimeout(() => {
-          Code.expect(numberOfTimesCalled).to.be.above(2);
-          done();
-        }, 3000);
-      });
     });
+    await server.start();
+    const wait = ms => new Promise(resolve => setTimeout(resolve, ms)); await wait(3000);
+    Code.expect(numberOfTimesCalled).to.be.above(2);
   });
 
-  lab.test(' adds a method and calls it with parameters at regular intervals ', (done) => {
-    server.register({
-      register: scheduler,
+  lab.test(' adds a method and calls it with parameters at regular intervals ', async() => {
+    await server.register({
+      plugin: scheduler,
       options: {
         schedule: [
           {
@@ -98,23 +80,15 @@ lab.experiment('hapi-method-scheduler', () => {
           }
         ]
       }
-    },
-    (err) => {
-      if (err) {
-        throw err;
-      }
-      server.start(() => {
-        setTimeout(() => {
-          Code.expect(addResult).to.be.above(4);
-          done();
-        }, 2200);
-      });
     });
+    await server.start();
+    const wait = ms => new Promise(resolve => setTimeout(resolve, ms)); await wait(2500);
+    Code.expect(addResult).to.be.above(4);
   });
 
-  lab.test(' adds a method as a complete call of the form "foo(param1, param2)" and calls it at regular intervals ', (done) => {
-    server.register({
-      register: scheduler,
+  lab.test(' adds a method as a complete call of the form "foo(param1, param2)" and calls it at regular intervals ', async() => {
+    await server.register({
+      plugin: scheduler,
       options: {
         schedule: [
           {
@@ -123,22 +97,14 @@ lab.experiment('hapi-method-scheduler', () => {
           }
         ]
       }
-    },
-    (err) => {
-      if (err) {
-        throw err;
-      }
-      server.start(() => {
-        setTimeout(() => {
-          Code.expect(addResult).to.be.above(4);
-          addResult = 0;
-          done();
-        }, 2200);
-      });
     });
+    await server.start();
+    const wait = ms => new Promise(resolve => setTimeout(resolve, ms)); await wait(2000);
+    Code.expect(addResult).to.be.above(4);
+    addResult = 0;
   });
 
-  lab.test(' supports onStart and onFinish hooks ', (done) => {
+  lab.test(' supports onStart and onFinish hooks ', async() => {
     const eventCalls = {
       start: 0,
       end: 0
@@ -153,8 +119,8 @@ lab.experiment('hapi-method-scheduler', () => {
       eventCalls.end ++;
       eventCalls.endParams = params;
     });
-    server.register({
-      register: scheduler,
+    await server.register({
+      plugin: scheduler,
       options: {
         onStart: 'onStart',
         onEnd: 'onEnd',
@@ -166,22 +132,15 @@ lab.experiment('hapi-method-scheduler', () => {
           }
         ]
       }
-    },
-    (err) => {
-      if (err) {
-        throw err;
-      }
-      server.start(() => {
-        setTimeout(() => {
-          Code.expect(eventCalls.start).to.be.above(1);
-          Code.expect(eventCalls.end).to.be.above(1);
-          Code.expect(eventCalls.endParams).to.be.above(4);
-          done();
-        }, 2500);
-      });
     });
+    await server.start();
+    const wait = ms => new Promise(resolve => setTimeout(resolve, ms)); await wait(2500);
+    Code.expect(eventCalls.start).to.be.above(1);
+    Code.expect(eventCalls.end).to.be.above(1);
+    Code.expect(eventCalls.endParams).to.be.above(4);
   });
-  lab.test(' supports timezone', { timeout: 5000 }, (done) => {
+
+  lab.test(' supports timezone', { timeout: 5000 }, async() => {
     const getOffset = (zoneName) => {
       const now = new Date();
       const zone = moment.tz.zone(zoneName);
@@ -209,8 +168,8 @@ lab.experiment('hapi-method-scheduler', () => {
       }
     }
     const string = `after ${new Date().getHours()}:${getMinutes(1)}`;
-    server.register({
-      register: scheduler,
+    await server.register({
+      plugin: scheduler,
       options: {
         timezone: futureZone,
         schedule: [
@@ -221,28 +180,19 @@ lab.experiment('hapi-method-scheduler', () => {
           }
         ]
       }
-    },
-    (err) => {
-      if (err) {
-        throw err;
-      }
-      server.start(() => {
-        setTimeout(() => {
-          Code.expect(addResult).to.be.above(4);
-          done();
-        }, 2200);
-      });
     });
+    await server.start();
+    const wait = ms => new Promise(resolve => setTimeout(resolve, ms)); await wait(2500);
+    Code.expect(addResult).to.be.above(4);
   });
 
-  lab.test('runOnStart will execute the method when it is registered', { timeout: 3000 }, (done) => {
+  lab.test('runOnStart will execute the method when it is registered', { timeout: 3000 }, async() => {
     let calledOnStart = 0;
-    server.method('callOnStart', (callDone) => {
+    server.method('callOnStart', async () => {
       calledOnStart++;
-      callDone();
     });
-    server.register({
-      register: scheduler,
+    await server.register({
+      plugin: scheduler,
       options: {
         schedule: [
           {
@@ -252,17 +202,9 @@ lab.experiment('hapi-method-scheduler', () => {
           }
         ]
       }
-    },
-    (err) => {
-      if (err) {
-        throw err;
-      }
-      server.start(() => {
-        setTimeout(() => {
-          Code.expect(calledOnStart).to.equal(1);
-          done();
-        }, 2500);
-      });
     });
+    await server.start();
+    const wait = ms => new Promise(resolve => setTimeout(resolve, ms)); await wait(2000);
+    Code.expect(calledOnStart).to.equal(1);
   });
 });

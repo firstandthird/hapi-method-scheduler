@@ -5,9 +5,9 @@ var module = require("../index.js");
 
 // an example of a method to export. the last param of your method will be a 'done' callback
 // who's first param is any error message and second is the output of the method
-function add(a, b, done){
+function add(a, b) {
   var result = a+b;
-  done(null, result);
+  return result;
 }
 
 // another example, this one will be added to server.method.math
@@ -18,23 +18,24 @@ function mathAdd(a,b,done){
     var floatA = parseFloat(a);
     var floatB = parseFloat(b);
     var result = floatA + floatB;
-    done(null,result);
+    return result;
   }catch(exc){
-    done(exc);
+    throw exc;
   }
 }
 
-var server = new Hapi.Server( {
-  debug : {
-      log : ['info', 'error']
-    },
-});
-server.method('add', add);
-server.method('math.add', mathAdd)
-server.connection({ port: 3000 });
-server.register({
-    register : module,
-    options : {
+const f = async () => {
+  const server = new Hapi.Server( {
+    debug : {
+        log : ['info', 'error']
+      },
+    port: 3000
+  });
+  server.method('add', add);
+  server.method('math.add', mathAdd)
+  await server.register({
+    plugin: module,
+    options: {
       timezone: 'America/Los_Angeles',
       schedule: [
         // text-style scheduled task
@@ -73,17 +74,11 @@ server.register({
         //   method : 'add',
         //   params : [20,20]
         // },
-
       ]
     }
-  },
-  function(err){
-    server.log(['hapi-method-scheduler', 'info'], "module registered")
-    if (err) {
-      server.log(['hapi-method-scheduler', 'error'], err);
-    }
-    else{
-      server.start(function () {
-      });
-    }
-});
+  });
+  server.log(['hapi-method-scheduler', 'info'], "module registered")
+  await server.start();
+};
+
+f();

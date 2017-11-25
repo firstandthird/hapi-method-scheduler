@@ -4,11 +4,11 @@
 // and http://bunkat.github.io/later/parsers.html#text
 // for acceptable formats. this plugin always assumes a seconds field
 // is present for cron.
-exports.register = function(server, options, next) {
+const register = async function(server, options) {
   // this will hold the method, params and interval for each method we want to run:
   const methodExecutionData = [];
 
-  server.on('start', () => {
+  server.events.on('start', () => {
     // create and launch an interval schedule for a method:
     server.method('methodScheduler.startSchedule', (methodName) => require('./lib/start.js')(server, methodExecutionData, options, methodName));
 
@@ -25,9 +25,13 @@ exports.register = function(server, options, next) {
       });
     }
   });
-  next();
+  // server.events.on('end', () => {
+  //   // need to close all schedules on shutdown
+  // });
 };
 
-exports.register.attributes = {
+exports.plugin = {
+  register,
+  once: true,
   pkg: require('./package.json')
 };
