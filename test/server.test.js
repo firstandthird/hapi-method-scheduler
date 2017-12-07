@@ -54,13 +54,13 @@ lab.experiment('hapi-method-scheduler: get and add method', { timeout: 5000 }, (
   let numberOfTimesCalled = 0;
   let addResult = 0;
 
-  const countNumberOfTimesCalled = function (done) {
+  const countNumberOfTimesCalled = function () {
     numberOfTimesCalled ++;
-    done(null, numberOfTimesCalled);
+    return numberOfTimesCalled;
   };
-  const add = function (a, b, done) {
+  const add = function (a, b) {
     addResult += a + b;
-    done(null, addResult);
+    return addResult;
   };
 
   lab.beforeEach(async() => {
