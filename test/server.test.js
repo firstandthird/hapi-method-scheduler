@@ -19,23 +19,21 @@ lab.experiment('hapi-method-scheduler: stop method', { timeout: 5000 }, () => {
     done(null, addResult);
   };
 
-  lab.beforeEach((done) => {
+  lab.beforeEach( async() => {
     numberOfTimesCalled = 0;
-    server = new Hapi.Server();
+    server = new Hapi.Server({ port: 3000 });
     server.method('add', add);
     server.method('countNumberOfTimesCalled', countNumberOfTimesCalled);
-    server.connection({ port: 3000 });
-    done();
   });
 
-  lab.afterEach((done) => {
-    server.stop(done);
+  lab.afterEach( async() => {
+    await server.stop();
   });
 
-  lab.test(' can stop an added method', (done) => {
+  lab.test(' can stop an added method', async() => {
     numberOfTimesCalled = 0;
-    server.register({
-      register: scheduler,
+    await server.register({
+      plugin: scheduler,
       options: {
         schedule: [
           {
@@ -44,19 +42,10 @@ lab.experiment('hapi-method-scheduler: stop method', { timeout: 5000 }, () => {
           }
         ]
       }
-    },
-    (err) => {
-      if (err) {
-        throw err;
-      }
-      server.start(() => {
-        server.methods.methodScheduler.stopSchedule('countNumberOfTimesCalled');
-        setTimeout(() => {
-          Code.expect(numberOfTimesCalled).to.equal(0);
-          done();
-        }, 3000);
-      });
     });
+    await server.start();
+    server.methods.methodScheduler.stopSchedule('countNumberOfTimesCalled');
+    const wait = ms => new Promise(resolve => setTimeout(resolve, ms)); await wait(2000);
   });
 });
 
@@ -65,55 +54,45 @@ lab.experiment('hapi-method-scheduler: get and add method', { timeout: 5000 }, (
   let numberOfTimesCalled = 0;
   let addResult = 0;
 
-  const countNumberOfTimesCalled = function (done) {
+  const countNumberOfTimesCalled = function () {
     numberOfTimesCalled ++;
-    done(null, numberOfTimesCalled);
+    return numberOfTimesCalled;
   };
-  const add = function (a, b, done) {
+  const add = function (a, b) {
     addResult += a + b;
-    done(null, addResult);
+    return addResult;
   };
 
-  lab.beforeEach((done) => {
+  lab.beforeEach(async() => {
     numberOfTimesCalled = 0;
-    server = new Hapi.Server();
+    server = new Hapi.Server({ port: 3000 });
     server.method('add', add);
     server.method('countNumberOfTimesCalled', countNumberOfTimesCalled);
-    server.connection({ port: 3000 });
-    done();
   });
 
-  lab.afterEach((done) => {
-    server.stop(done);
+  lab.afterEach(async() => {
+    await server.stop();
   });
 
-  lab.test(' can add a scheduled method after registered', (done) => {
+  lab.test(' can add a scheduled method after registered', async() => {
     numberOfTimesCalled = 0;
-    server.register({
-      register: scheduler,
+    await server.register({
+      plugin: scheduler,
       options: {}
-    },
-    (err) => {
-      if (err) {
-        throw err;
-      }
-      server.start(() => {
-        server.methods.methodScheduler.startSchedule({
-          method: 'countNumberOfTimesCalled',
-          time: 'every 1 seconds'
-        });
-        setTimeout(() => {
-          // Code.expect(numberOfTimesCalled).to.equal(2);
-          done();
-        }, 2500);
-      });
     });
+    await server.start();
+    server.methods.methodScheduler.startSchedule({
+      method: 'countNumberOfTimesCalled',
+      time: 'every 1 seconds'
+    });
+    const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
+    await wait(2000);
   });
 
-  lab.test(' can get an existing method schedule', (done) => {
+  lab.test(' can get an existing method schedule', async () => {
     numberOfTimesCalled = 0;
-    server.register({
-      register: scheduler,
+    await server.register({
+      plugin: scheduler,
       options: {
         schedule: [
           {
@@ -122,75 +101,53 @@ lab.experiment('hapi-method-scheduler: get and add method', { timeout: 5000 }, (
           }
         ]
       }
-    },
-    (err) => {
-      if (err) {
-        throw err;
-      }
-      server.start(() => {
-        const method = server.methods.methodScheduler.getSchedule('countNumberOfTimesCalled');
-        Code.expect(typeof method).to.equal('object');
-        Code.expect(typeof method.method).to.equal('function');
-        Code.expect(typeof method.executingSchedule).to.equal('object');
-        done();
-      });
     });
+    await server.start();
+    const method = server.methods.methodScheduler.getSchedule('countNumberOfTimesCalled');
+    Code.expect(typeof method).to.equal('object');
+    Code.expect(typeof method.method).to.equal('function');
+    Code.expect(typeof method.executingSchedule).to.equal('object');
   });
 
-  lab.test('can assign multiple copies of the same method with different labels', { timeout: 5000 }, (done) => {
+  lab.test('can assign multiple copies of the same method with different labels', { timeout: 5000 }, async() => {
     numberOfTimesCalled = 0;
-    server.register({
-      register: scheduler,
+    await server.register({
+      plugin: scheduler,
       options: {}
-    },
-    (err) => {
-      if (err) {
-        throw err;
-      }
-      server.start(() => {
-        server.methods.methodScheduler.startSchedule({
-          label: 'label1',
-          method: 'countNumberOfTimesCalled',
-          time: 'every 1 seconds'
-        });
-        server.methods.methodScheduler.startSchedule({
-          label: 'label2',
-          method: 'countNumberOfTimesCalled',
-          time: 'every 1 seconds'
-        });
-        setTimeout(() => {
-          Code.expect(numberOfTimesCalled).to.be.greaterThan(4);
-          done();
-        }, 2500);
-      });
     });
+    await server.start();
+    server.methods.methodScheduler.startSchedule({
+      label: 'label1',
+      method: 'countNumberOfTimesCalled',
+      time: 'every 1 seconds'
+    });
+    server.methods.methodScheduler.startSchedule({
+      label: 'label2',
+      method: 'countNumberOfTimesCalled',
+      time: 'every 1 seconds'
+    });
+    const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
+    await wait(2500);
+    Code.expect(numberOfTimesCalled).to.be.greaterThan(4);
   });
 
-  lab.test('throws error if you register multiple functions with the same label', { timeout: 5000 }, (done) => {
+  lab.test('throws error if you register multiple functions with the same label', { timeout: 5000 }, async() => {
     numberOfTimesCalled = 0;
-    server.register({
-      register: scheduler,
+    await server.register({
+      plugin: scheduler,
       options: {}
-    },
-    (err) => {
-      if (err) {
-        throw err;
-      }
-      server.start(() => {
-        server.methods.methodScheduler.startSchedule({
-          label: 'label1',
-          method: 'countNumberOfTimesCalled',
-          time: 'every 1 seconds'
-        });
-        server.methods.methodScheduler.startSchedule({
-          label: 'label1',
-          method: 'countNumberOfTimesCalled',
-          time: 'every 1 seconds'
-        });
-        setTimeout(() => {
-          done();
-        }, 2500);
-      });
     });
+    await server.start();
+    server.methods.methodScheduler.startSchedule({
+      label: 'label1',
+      method: 'countNumberOfTimesCalled',
+      time: 'every 1 seconds'
+    });
+    server.methods.methodScheduler.startSchedule({
+      label: 'label1',
+      method: 'countNumberOfTimesCalled',
+      time: 'every 1 seconds'
+    });
+    const wait = ms => new Promise(resolve => setTimeout(resolve, ms)); await wait(2000);
   });
 });
