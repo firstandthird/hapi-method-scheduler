@@ -144,7 +144,7 @@ lab.experiment('hapi-method-scheduler', () => {
     const getOffset = (zoneName) => {
       const now = new Date();
       const zone = moment.tz.zone(zoneName);
-      return zone.offset(now);
+      return zone.utcOffset(now);
     };
     const getMinutes = (val) => {
       const mins = new Date().getMinutes() + val;
