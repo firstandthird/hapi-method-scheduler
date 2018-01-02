@@ -1,64 +1,135 @@
 'use strict';
-const Code = require('code');   // assertion library
-const Lab = require('lab');
-const lab = exports.lab = Lab.script();
 const Hapi = require('hapi');
 const scheduler = require('../index.js');
-
+const tap = require('tap');
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
 
-lab.experiment('hapi-method-scheduler', () => {
-  let server;
-
-  lab.beforeEach(() => {
-    server = new Hapi.Server({ port: 3000 });
+tap.test(' adds a method and calls it at regular intervals using cron syntax', async(t) => {
+  const server = new Hapi.Server({ port: 3000 });
+  let numberOfTimesCalled = 0;
+  server.method('countNumberOfTimesCalled', () => {
+    numberOfTimesCalled ++;
+    return numberOfTimesCalled;
   });
-
-  lab.afterEach(async() => {
-    await server.stop();
+  await server.register({
+    plugin: scheduler,
+    options: {
+      schedule: [
+        {
+          method: 'countNumberOfTimesCalled',
+          cron: '* * * * * *' // 1 time per second
+        }
+      ]
+    }
   });
+  await server.start();
+  await wait(5000);
+  t.equal(numberOfTimesCalled > 2, true, 'calls the method at regular intervals');
+  await server.stop();
+  t.end();
+});
 
-  lab.test(' adds a method and calls it at regular intervals using cron syntax', async() => {
-    let numberOfTimesCalled = 0;
-    server.method('countNumberOfTimesCalled', () => {
-      numberOfTimesCalled ++;
-      return numberOfTimesCalled;
-    });
-    await server.register({
-      plugin: scheduler,
-      options: {
-        schedule: [
-          {
-            method: 'countNumberOfTimesCalled',
-            cron: '* * * * * *' // 1 time per second
-          }
-        ]
-      }
-    });
-    await server.start();
-    await wait(5000);
-    Code.expect(numberOfTimesCalled).to.be.above(2);
+tap.test(' adds a method and calls it with parameters at regular intervals ', async(t) => {
+  const server = new Hapi.Server({ port: 3000 });
+  let addResult = 0;
+  server.method('add', (a, b) => {
+    t.equal(a, 1, 'passes function params correctly');
+    t.equal(b, 3, 'passes function params correctly');
+    addResult += a + b;
+    return addResult;
   });
+  await server.register({
+    plugin: scheduler,
+    options: {
+      schedule: [
+        {
+          method: 'add(1, 3)',
+          cron: '* * * * * *'
+        }
+      ]
+    }
+  });
+  await server.start();
+  await wait(4500);
+  t.equal(addResult > 4, true, 'calls the function with the correct params');
+  await server.stop();
+  t.end();
+});
 
-  lab.test(' adds a method and calls it with parameters at regular intervals ', async() => {
-    let addResult = 0;
-    server.method('add', (a, b) => {
-      addResult += a + b;
-      return addResult;
-    });
-    await server.register({
-      plugin: scheduler,
-      options: {
-        schedule: [
-          {
-            method: 'add(1, 3)',
-            cron: '* * * * * *'
-          }
-        ]
-      }
-    });
-    await server.start();
-    await wait(4500);
-    Code.expect(addResult).to.be.above(4);
+tap.test(' adds a method and calls it at a specified time using cron syntax', async(t) => {
+  const server = new Hapi.Server({ port: 3000 });
+  let numberOfTimesCalled = 0;
+  server.method('countNumberOfTimesCalled', () => {
+    numberOfTimesCalled ++;
+    return numberOfTimesCalled;
   });
+  await server.register({
+    plugin: scheduler,
+    options: {
+      schedule: [
+        {
+          method: 'countNumberOfTimesCalled',
+          cron: new Date(new Date().getTime() + 1000) // 1 second in the future
+        }
+      ]
+    }
+  });
+  await server.start();
+  await wait(5000);
+  t.equal(numberOfTimesCalled, 1, 'calls the method at the specified time');
+  await server.stop();
+  t.end();
+});
+
+tap.test('supports runOnInit', async(t) => {
+  const server = new Hapi.Server({ port: 3000 });
+  let numberOfTimesCalled = 0;
+  server.method('countNumberOfTimesCalled', () => {
+    numberOfTimesCalled ++;
+    return numberOfTimesCalled;
+  });
+  await server.register({
+    plugin: scheduler,
+    options: {
+      schedule: [
+        {
+          method: 'countNumberOfTimesCalled',
+          cron: new Date(new Date().getTime() + 60000), // 1 minute in the future
+          runOnInit: true, // runs on init
+        }
+      ]
+    }
+  });
+  await server.start();
+  t.equal(numberOfTimesCalled, 1, 'calls the method when it is first added');
+  await server.stop();
+  t.end();
+});
+
+tap.test('can also call a function registered on a specific plugin with .expose()', async(t) => {
+  const server = new Hapi.Server({ port: 3000 });
+  let numberOfTimesCalled = 0;
+  await server.register({
+    plugin: require('./plugin.js'),
+    options: {
+      numberOfTimesCalled
+    }
+  });
+  await server.register({
+    plugin: scheduler,
+    options: {
+      schedule: [
+        {
+          method: 'countNumberOfTimesCalled',
+          // usePlugin: 'hapi-method-scheduler',
+          cron: new Date(new Date().getTime() + 1000) // 1 second in the future
+        }
+      ]
+    }
+  });
+  await server.start();
+  await wait(5000);
+  t.equal(numberOfTimesCalled, 1, 'calls the method at the specified time');
+  await server.stop();
+  t.end();
 });
