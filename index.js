@@ -1,29 +1,20 @@
-'use strict';
+const CronJob = require('cron').CronJob;
+const str2fn = require('str2fn');
 
-// see http://bunkat.github.io/later/parsers.html#cron
-// and http://bunkat.github.io/later/parsers.html#text
-// for acceptable formats. this plugin always assumes a seconds field
-// is present for cron.
 const register = async function(server, options) {
-  // this will hold the method, params and interval for each method we want to run:
-  const methodExecutionData = [];
-
-  server.events.on('start', () => {
-    // create and launch an interval schedule for a method:
-    server.method('methodScheduler.startSchedule', (methodName) => require('./lib/start.js')(server, methodExecutionData, options, methodName));
-
-    // stop an interval schedule from running:
-    server.method('methodScheduler.stopSchedule', (methodName) => require('./lib/stop.js')(server, methodExecutionData, methodName));
-
-    // get the interval schedule for a method by name of the method:
-    server.method('methodScheduler.getSchedule', (methodName) => require('./lib/get.js')(methodExecutionData, methodName));
-
-    // register any methods that were passed in params:
-    if (Array.isArray(options.schedule)) {
-      options.schedule.forEach((i) => {
-        server.methods.methodScheduler.startSchedule(i);
-      });
-    }
+  server.decorate('server', 'scheduleMethod', (cronString, methodStringOrFn, runOnInit) => {
+    // this will throw an error if cronString isn't valid, which should be handled by caller:
+    const cronJob = new CronJob(cronString, async() => {
+      try {
+        // params are included in method string:
+        str2fn.execute(methodStringOrFn, server.methods);
+      } catch (e) {
+        server.log(['hapi-method-scheduler', 'error'], e);
+      }
+    }, null, true, options.timezone, {}, runOnInit);
+  });
+  options.schedule.forEach((scheduleDirective) => {
+    server.scheduleMethod(scheduleDirective.cron, scheduleDirective.method);
   });
 };
 
