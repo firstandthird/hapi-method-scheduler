@@ -4,7 +4,7 @@ const str2fn = require('str2fn');
 const register = async function(server, options) {
   server.decorate('server', 'scheduleMethod', (cronString, methodStringOrFn, runOnInit) => {
     // this will throw an error if cronString isn't valid, which should be handled by caller:
-    const cronJob = new CronJob(cronString, async() => {
+    return new CronJob(cronString, async() => {
       try {
         // params are included in method string:
         str2fn.execute(methodStringOrFn, server.methods);
