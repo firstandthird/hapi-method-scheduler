@@ -106,31 +106,23 @@ tap.test('supports runOnInit', async(t) => {
   t.end();
 });
 
-tap.test('can also call a function registered on a specific plugin with .expose()', async(t) => {
+tap.test('can schedule a function manually by calling server.scheduleMethod', async(t) => {
   const server = new Hapi.Server({ port: 3000 });
-  let numberOfTimesCalled = 0;
-  await server.register([{
-    plugin: require('./plugin.js'),
-    options: {
-      numberOfTimesCalled
-    }
-  },
-  {
+  await server.register({
     plugin: scheduler,
     options: {
-      schedule: [
-        {
-          method: 'countNumberOfTimesCalled',
-          usePlugin: 'hapi-method-scheduler',
-          runOnInit: true,
-          cron: new Date(new Date().getTime() + 1000) // 1 second in the future
-        }
-      ]
+      schedule: []
     }
-  }]);
+  });
+  let numberOfTimesCalled = 0;
+  server.method('countNumberOfTimesCalled', () => {
+    numberOfTimesCalled ++;
+    return numberOfTimesCalled;
+  });
   await server.start();
-  await wait(2000);
-  t.equal(numberOfTimesCalled, 1, '');
+  server.scheduleMethod(new Date(new Date().getTime() + 1000), 'countNumberOfTimesCalled');
+  await wait(3000);
+  t.equal(numberOfTimesCalled, 1, 'calls the method at the specified time');
   await server.stop();
   t.end();
 });

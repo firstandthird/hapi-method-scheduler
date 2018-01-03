@@ -3,14 +3,12 @@ const str2fn = require('str2fn');
 
 const register = (server, options) => {
   const allJobs = [];
-  /* eslint-disable arrow-body-style */
-  server.decorate('server', 'scheduleMethod', (cronString, methodStringOrFn, runOnInit, usePlugin) => {
-    const methodObj = usePlugin ? server.plugins[usePlugin] : server.methods;
+  server.decorate('server', 'scheduleMethod', (cronString, methodStringOrFn, runOnInit) => {
     // this will throw an error if cronString isn't valid, which should be handled by caller:
     const job = new CronJob(cronString, async() => {
       try {
         // params are included in method string:
-        await str2fn.execute(methodStringOrFn, methodObj);
+        await str2fn.execute(methodStringOrFn, server.methods);
       } catch (e) {
         server.log(['hapi-method-scheduler', 'error'], e);
       }
