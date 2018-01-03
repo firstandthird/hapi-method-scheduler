@@ -33,6 +33,7 @@ const register = (server, options) => {
 };
 
 exports.plugin = {
+  name: 'hapi-method-scheduler',
   register,
   once: true,
   pkg: require('./package.json')

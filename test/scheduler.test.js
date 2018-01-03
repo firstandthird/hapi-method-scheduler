@@ -4,7 +4,7 @@ const scheduler = require('../index.js');
 const tap = require('tap');
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
 
-tap.test(' adds a method and calls it at regular intervals using cron syntax', async(t) => {
+tap.test('adds a method and calls it at regular intervals using cron syntax', async(t) => {
   const server = new Hapi.Server({ port: 3000 });
   let numberOfTimesCalled = 0;
   server.method('countNumberOfTimesCalled', () => {
@@ -29,7 +29,7 @@ tap.test(' adds a method and calls it at regular intervals using cron syntax', a
   t.end();
 });
 
-tap.test(' adds a method and calls it with parameters at regular intervals ', async(t) => {
+tap.test('adds a method and calls it with parameters at regular intervals ', async(t) => {
   const server = new Hapi.Server({ port: 3000 });
   let addResult = 0;
   server.method('add', (a, b) => {
@@ -56,7 +56,7 @@ tap.test(' adds a method and calls it with parameters at regular intervals ', as
   t.end();
 });
 
-tap.test(' adds a method and calls it at a specified time using cron syntax', async(t) => {
+tap.test('adds a method and calls it at a specified time using cron syntax', async(t) => {
   const server = new Hapi.Server({ port: 3000 });
   let numberOfTimesCalled = 0;
   server.method('countNumberOfTimesCalled', () => {
@@ -109,27 +109,28 @@ tap.test('supports runOnInit', async(t) => {
 tap.test('can also call a function registered on a specific plugin with .expose()', async(t) => {
   const server = new Hapi.Server({ port: 3000 });
   let numberOfTimesCalled = 0;
-  await server.register({
+  await server.register([{
     plugin: require('./plugin.js'),
     options: {
       numberOfTimesCalled
     }
-  });
-  await server.register({
+  },
+  {
     plugin: scheduler,
     options: {
       schedule: [
         {
           method: 'countNumberOfTimesCalled',
-          // usePlugin: 'hapi-method-scheduler',
+          usePlugin: 'hapi-method-scheduler',
+          runOnInit: true,
           cron: new Date(new Date().getTime() + 1000) // 1 second in the future
         }
       ]
     }
-  });
+  }]);
   await server.start();
-  await wait(5000);
-  t.equal(numberOfTimesCalled, 1, 'calls the method at the specified time');
+  await wait(2000);
+  t.equal(numberOfTimesCalled, 1, '');
   await server.stop();
   t.end();
 });

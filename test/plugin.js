@@ -6,6 +6,7 @@ const register = (server, options) => {
 };
 
 exports.plugin = {
+  name: 'plugin',
   register,
   once: true,
   pkg: require('../package.json')
