@@ -24,7 +24,6 @@ const register = (server, options) => {
     });
   });
 
-  /* eslint-enable arrow-body-style */
   options.schedule.forEach((scheduleDirective) => {
     server.scheduleMethod(scheduleDirective.cron, scheduleDirective.method, scheduleDirective.runOnInit, scheduleDirective.usePlugin);
   });
