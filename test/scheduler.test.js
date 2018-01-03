@@ -126,3 +126,26 @@ tap.test('can schedule a function manually by calling server.scheduleMethod', as
   await server.stop();
   t.end();
 });
+
+tap.test('does not crash if an invalid method is called', async(t) => {
+  const server = new Hapi.Server({ port: 3000 });
+  await server.register({
+    plugin: scheduler,
+    options: {
+      schedule: [
+        {
+          method: 'countNumberOfTimesCalled',
+          cron: new Date(new Date().getTime() + 1000)
+        }
+      ]
+    }
+  });
+  server.events.on('log', (info) => {
+    t.equal(info.tags[0], 'hapi-method-scheduler', 'logs that there was an error');
+    t.equal(info.tags[1], 'error', 'logs that there was an error');
+  });
+  await server.start();
+  await wait(3000);
+  await server.stop();
+  t.end();
+});

@@ -25,7 +25,7 @@ const register = (server, options) => {
   });
 
   options.schedule.forEach((scheduleDirective) => {
-    server.scheduleMethod(scheduleDirective.cron, scheduleDirective.method, scheduleDirective.runOnInit, scheduleDirective.usePlugin);
+    server.scheduleMethod(scheduleDirective.cron, scheduleDirective.method, scheduleDirective.runOnInit);
   });
 };
 
